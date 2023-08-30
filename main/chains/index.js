@@ -5,6 +5,7 @@ const { addHexPrefix } = require('@ethereumjs/util')
 const { Hardfork } = require('@ethereumjs/common')
 const provider = require('eth-provider')
 const log = require('electron-log')
+const RPChSDK = require('@rpch/sdk')
 const { RPChEthereumProvider } = require('@rpch/ethereum-provider')
 const RPChCrypto = require('@rpch/crypto-for-nodejs')
 
@@ -23,8 +24,8 @@ const { createGasCalculator } = require('./gas')
 const legacyChains = [250, 4002, 42161]
 
 class FrameRpchProvider extends RPChEthereumProvider {
-  constructor(url, hoprSdkOps, setKeyVal, getKeyVal) {
-    super(url, hoprSdkOps, setKeyVal, getKeyVal)
+  constructor(clientId, hoprSdkOps) {
+    super(new RPChSDK(clientId, hoprSdkOps))
     this.connected = false
     this.subscriptions = false
     this.status = 'loading'
@@ -180,17 +181,7 @@ class ChainConnection extends EventEmitter {
 
     if (target === 'rpch') {
       // create rpch provider
-      this[priority].provider = new FrameRpchProvider(
-        'https://primary.gnosis-chain.rpc.hoprtech.net',
-        {
-          timeout: 10000,
-          discoveryPlatformApiEndpoint: 'https://staging.discovery.rpch.tech',
-          client: 'frame',
-          crypto: RPChCrypto
-        },
-        (k, v) => set(k, v),
-        (k) => get(k)
-      )
+      this[priority].provider = new FrameRpchProvider('frame', RPChCrypto)
       this[priority].blockMonitor = this._createBlockMonitor(this[priority].provider, priority)
     } else {
       this[priority].provider = provider(target, {
