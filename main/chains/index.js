@@ -3,7 +3,6 @@ const { powerMonitor } = require('electron')
 const EventEmitter = require('events')
 const { addHexPrefix } = require('@ethereumjs/util')
 const { Hardfork } = require('@ethereumjs/common')
-const provider = require('eth-provider')
 const log = require('electron-log')
 
 const store = require('../store').default
@@ -12,6 +11,7 @@ const { default: chainConfig } = require('./config')
 const { default: GasMonitor } = require('../transaction/gasMonitor')
 const { createGasCalculator } = require('./gas')
 const { NETWORK_PRESETS } = require('../../resources/constants')
+const { createRpchProvider } = require('./rpchProvider')
 
 // These chain IDs are known to not support EIP-1559 and will be forced
 // not to use that mechanism
@@ -68,7 +68,7 @@ class ChainConnection extends EventEmitter {
 
     this.update(priority)
 
-    this[priority].provider = provider(target, {
+    this[priority].provider = createRpchProvider(target, {
       name: priority,
       origin: 'frame'
     })
