@@ -371,6 +371,25 @@ class Settings extends Component {
             </div>
             <div className='signerPermissionDetails'>When should Frame relock your hot signers?</div>
           </div>
+
+          <div className='signerPermission localSetting' style={{ zIndex: 198 }}>
+            <div className='signerPermissionControls'>
+              <div className='signerPermissionSetting'>Protect My Privacy</div>
+              <div
+                className={
+                  this.store('main.rpchEnabled')
+                    ? 'signerPermissionToggle signerPermissionToggleOn'
+                    : 'signerPermissionToggle'
+                }
+                onClick={() => link.send('tray:action', 'setRpchEnabled', !this.store('main.rpchEnabled'))}
+              >
+                <div className='signerPermissionToggleSwitch' />
+              </div>
+            </div>
+            <div className='signerPermissionDetails'>
+              <span>Transfer all the data via secure RPCh network</span>
+            </div>
+          </div>
         </div>
       </div>
     )

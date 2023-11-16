@@ -6,6 +6,7 @@ import { Response } from '@rpch/sdk/build/response'
 import { v4 as uuid } from 'uuid'
 import EthereumProvider from 'ethereum-provider'
 import provider from 'eth-provider'
+import store from '../../store'
 
 const dev = process.env.NODE_ENV === 'development'
 
@@ -174,7 +175,9 @@ class RPChConnection extends EventEmitter implements Connection {
 }
 
 export const createRpchProvider: typeof provider = (target, options) => {
-  if (typeof target === 'string' && /^http(s)?:\/\//i.test(target)) {
+  const isRpchEnabled = store('main.latticeSettings.rpchEnabled')
+
+  if (typeof target === 'string' && /^http(s)?:\/\//i.test(target) && isRpchEnabled) {
     return new EthereumProvider(new RPChConnection())
   }
   return provider(target, options)

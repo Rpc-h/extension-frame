@@ -28,7 +28,8 @@ const PreferencesSchema = {
     .describe("Lock an account when it's closed instead of when Frame restarts"),
   showLocalNameWithENS: z.boolean(),
   menubarGasPrice: z.boolean().default(false).describe('Show gas price in menu bar'),
-  hardwareDerivation: z.string()
+  hardwareDerivation: z.string(),
+  rpchEnabled: z.boolean().default(true)
 }
 
 const notificationTypes = z.enum([

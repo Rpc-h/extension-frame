@@ -444,16 +444,18 @@ class Chains extends EventEmitter {
       }
     }
 
-    const updateConnections = () => {
-      const networks = store('main.networks')
-
-      Object.keys(this.connections).forEach((type) => {
-        Object.keys(this.connections[type]).forEach((chainId) => {
-          if (!networks[type][chainId]) {
-            removeConnection(chainId, type)
-          }
+    const updateConnections = (networks) => {
+      if (networks) {
+        Object.keys(this.connections).forEach((type) => {
+          Object.keys(this.connections[type]).forEach((chainId) => {
+            if (!networks[type][chainId]) {
+              removeConnection(chainId, type)
+            }
+          })
         })
-      })
+      }
+
+      networks = networks || this.connections
 
       Object.keys(networks).forEach((type) => {
         this.connections[type] = this.connections[type] || {}
@@ -490,12 +492,12 @@ class Chains extends EventEmitter {
       })
     }
 
-    powerMonitor.on('resume', () => {
+    const resetConnections = () => {
       const activeConnections = Object.keys(this.connections)
         .map((type) => Object.keys(this.connections[type]).map((chainId) => `${type}:${chainId}`))
         .flat()
 
-      log.info('System resuming, resetting active connections', { chains: activeConnections })
+      log.info('Resetting active connections', { chains: activeConnections })
 
       activeConnections.forEach((id) => {
         const [type, chainId] = id.split(':')
@@ -503,9 +505,28 @@ class Chains extends EventEmitter {
       })
 
       updateConnections()
+    }
+
+    const toggleRpchUsage = () => {
+      const rpchEnabled = store('main.rpchEnabled')
+      log.info(`RPCh ${rpchEnabled ? 'Enabled' : 'Disabled'}`)
+
+      resetConnections()
+    }
+
+    powerMonitor.on('resume', () => {
+      log.info('System resuming')
+
+      resetConnections()
     })
 
-    store.observer(updateConnections, 'chains:connections')
+    const networksChanged = () => {
+      const networks = store('main.networks')
+      updateConnections(networks)
+    }
+
+    store.observer(networksChanged, 'chains:connections')
+    store.observer(toggleRpchUsage, 'chains:rpch')
   }
 
   send(payload, res, targetChain) {

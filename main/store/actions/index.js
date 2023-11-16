@@ -931,9 +931,12 @@ module.exports = {
 
       return requests
     })
-  }
+  },
   // toggleUSDValue: (u) => {
   //   u('main.showUSDValue', show => !show)
   // }
   // __overwrite: (path, value) => u(path, () => value)
+  setRpchEnabled: (u, v) => {
+    u('main.rpchEnabled', () => v)
+  }
 }
