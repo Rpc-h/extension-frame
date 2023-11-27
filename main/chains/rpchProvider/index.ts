@@ -7,12 +7,37 @@ import { v4 as uuid } from 'uuid'
 import EthereumProvider from 'ethereum-provider'
 import provider from 'eth-provider'
 import store from '../../store'
+import log from 'electron-log'
 
 const dev = process.env.NODE_ENV === 'development'
 
-class RPChConnection extends EventEmitter implements Connection {
-  private sdk: RPChSDK
+class RPChSDKSingleton {
+  static sdk: RPChSDK | undefined
 
+  static options: Ops = {
+    discoveryPlatformEndpoint: process.env.DISCOVERY_PLATFORM_API_ENDPOINT || undefined,
+    forceZeroHop: true
+  }
+
+  static send(...args: Parameters<RPChSDK['send']>): ReturnType<RPChSDK['send']> {
+    if (!this.sdk) {
+      // TODO: Remove after confirmation and testing
+      log.info('RPCh: Client ID ', process.env.RPCH_SECRET_TOKEN)
+
+      if (!process.env.RPCH_SECRET_TOKEN) {
+        log.error('MISSING RPCH SECRET TOKEN')
+        throw new Error('MISSING RPCH SECRET TOKEN')
+      }
+
+      log.info('RPCh: first SEND request, creating SDK instance')
+      this.sdk = new RPChSDK(process.env.RPCH_SECRET_TOKEN, this.options)
+    }
+    return this.sdk.send(...args)
+  }
+}
+
+class RPChConnection extends EventEmitter implements Connection {
+  private rpcUrl: string
   private connected: boolean
   private closed: boolean
   private subscriptions: boolean
@@ -20,17 +45,10 @@ class RPChConnection extends EventEmitter implements Connection {
   private pollId: string
   private subscriptionTimeout: NodeJS.Timeout | undefined
 
-  constructor(options: Ops = {}) {
+  constructor(rpcUrl: string) {
     super()
 
-    // TODO: Remove after confirmation and testing
-    console.log('RPCh: CREATING SDK INSTANCE with OPS ', options)
-    console.log('RPCh: Client ID ', process.env.VUE_APP_RPCH_SECRET_TOKEN)
-    this.sdk = new RPChSDK(process.env.RPCH_SECRET_TOKEN || '', {
-      discoveryPlatformEndpoint: process.env.DISCOVERY_PLATFORM_API_ENDPOINT || undefined,
-      ...options // priority for "options" object
-    })
-
+    this.rpcUrl = rpcUrl
     this.connected = false
     this.closed = false
     this.subscriptions = false
@@ -47,11 +65,13 @@ class RPChConnection extends EventEmitter implements Connection {
   }
 
   onError(err: Error) {
-    if (!this.closed && this.listenerCount('error')) this.emit('error', err)
+    if (!this.closed && this.listenerCount('error')) {
+      log.error(err)
+      this.emit('error', err)
+    }
   }
 
   create() {
-    if (!this.sdk) return this.onError(new Error('No RPCh instance available'))
     this.on('error', () => {
       if (this.connected) this.close()
     })
@@ -107,7 +127,7 @@ class RPChConnection extends EventEmitter implements Connection {
   }
 
   close() {
-    if (dev) console.log('Closing HTTP connection')
+    if (dev) log.info('Closing HTTP connection')
 
     clearTimeout(this.subscriptionTimeout)
 
@@ -133,6 +153,7 @@ class RPChConnection extends EventEmitter implements Connection {
     payload: JSONRPCRequestPayload & { pollId?: string },
     internal?: (err: Error | null, result?: unknown) => void
   ) {
+    log.info('RPCH send', payload)
     if (this.closed) return this.error(payload, 'Not connected')
     if (payload.method === 'eth_subscribe') {
       if (this.subscriptions) {
@@ -144,18 +165,22 @@ class RPChConnection extends EventEmitter implements Connection {
 
     const { id, jsonrpc } = payload
 
-    return this.sdk
-      .send(payload)
+    return RPChSDKSingleton.send(payload, { provider: this.rpcUrl })
       .then((res: Response) => {
         return res.json()
       })
       .then((jsonRes: JRPC.Response): Result => {
+        log.info(
+          '====================================================================================================='
+        )
+        log.info('RPCH send', jsonRes)
+
         if (isError(jsonRes)) {
           throw jsonRes
         }
         return jsonRes
       })
-      .then((result) => {
+      .then((result: Result) => {
         if (internal) {
           internal(null, result)
           return
@@ -164,6 +189,10 @@ class RPChConnection extends EventEmitter implements Connection {
         this._emit('payload', load)
       })
       .catch((err) => {
+        log.info(
+          '====================================================================================================='
+        )
+        log.info('RPCH send error', err)
         if (internal) {
           internal(err)
           return
@@ -175,10 +204,11 @@ class RPChConnection extends EventEmitter implements Connection {
 }
 
 export const createRpchProvider: typeof provider = (target, options) => {
-  const isRpchEnabled = store('main.latticeSettings.rpchEnabled')
+  const isRpchEnabled = store('main.rpchEnabled')
+  log.info(`RPCh ${isRpchEnabled ? 'enabled' : 'disabled'}`)
 
   if (typeof target === 'string' && /^http(s)?:\/\//i.test(target) && isRpchEnabled) {
-    return new EthereumProvider(new RPChConnection())
+    return new EthereumProvider(new RPChConnection(target))
   }
   return provider(target, options)
 }

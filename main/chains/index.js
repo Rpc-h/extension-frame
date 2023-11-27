@@ -509,7 +509,7 @@ class Chains extends EventEmitter {
 
     const toggleRpchUsage = () => {
       const rpchEnabled = store('main.rpchEnabled')
-      log.info(`RPCh ${rpchEnabled ? 'Enabled' : 'Disabled'}`)
+      log.info(`RPCh observer ${rpchEnabled ? 'Enabled' : 'Disabled'}`)
 
       resetConnections()
     }
@@ -526,7 +526,7 @@ class Chains extends EventEmitter {
     }
 
     store.observer(networksChanged, 'chains:connections')
-    store.observer(toggleRpchUsage, 'chains:rpch')
+    // store.observer(toggleRpchUsage, 'chains:rpch')
   }
 
   send(payload, res, targetChain) {
