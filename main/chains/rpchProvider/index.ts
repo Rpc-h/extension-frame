@@ -1,15 +1,17 @@
-import RPChSDK, { JRPC, type Ops } from '@rpch/sdk'
+import RPChSDK, { type Ops } from '@rpch/sdk'
+import { isError } from '@rpch/sdk/build/jrpc'
 import EventEmitter from 'events'
 import { Connection } from 'ethereum-provider/dist/types'
-import { isError, Result } from '@rpch/sdk/build/jrpc'
-import { Response } from '@rpch/sdk/build/response'
 import { v4 as uuid } from 'uuid'
 import EthereumProvider from 'ethereum-provider'
 import provider from 'eth-provider'
 import store from '../../store'
 import log from 'electron-log'
+import debug from 'debug'
 
 const dev = process.env.NODE_ENV === 'development'
+
+debug.enable('rpch:*')
 
 class RPChSDKSingleton {
   static sdk: RPChSDK | undefined
@@ -166,10 +168,10 @@ class RPChConnection extends EventEmitter implements Connection {
     const { id, jsonrpc } = payload
 
     return RPChSDKSingleton.send(payload, { provider: this.rpcUrl })
-      .then((res: Response) => {
+      .then((res) => {
         return res.json()
       })
-      .then((jsonRes: JRPC.Response): Result => {
+      .then((jsonRes) => {
         log.info(
           '====================================================================================================='
         )
@@ -180,7 +182,7 @@ class RPChConnection extends EventEmitter implements Connection {
         }
         return jsonRes
       })
-      .then((result: Result) => {
+      .then((result) => {
         if (internal) {
           internal(null, result)
           return
@@ -189,10 +191,7 @@ class RPChConnection extends EventEmitter implements Connection {
         this._emit('payload', load)
       })
       .catch((err) => {
-        log.info(
-          '====================================================================================================='
-        )
-        log.info('RPCH send error', err)
+        log.info('RPCH send error', err, payload)
         if (internal) {
           internal(err)
           return
