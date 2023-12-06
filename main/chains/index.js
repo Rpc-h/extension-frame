@@ -526,7 +526,7 @@ class Chains extends EventEmitter {
     }
 
     store.observer(networksChanged, 'chains:connections')
-    // store.observer(toggleRpchUsage, 'chains:rpch')
+    store.observer(toggleRpchUsage, 'chains:rpch')
   }
 
   send(payload, res, targetChain) {

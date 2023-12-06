@@ -17,7 +17,7 @@ class RPChSDKSingleton {
 
   static options: Ops = {
     discoveryPlatformEndpoint: process.env.DISCOVERY_PLATFORM_API_ENDPOINT || undefined,
-    // forceZeroHop: true,
+    forceZeroHop: true,
 
     // TODO: Remove after confirmation and testing
     debugScope: 'rpch:*'
@@ -189,8 +189,7 @@ class RPChConnection extends EventEmitter implements Connection {
           internal(null, result)
           return
         }
-        const load = { id, jsonrpc, result }
-        this._emit('payload', load)
+        this._emit('payload', result)
       })
       .catch((err) => {
         log.info('RPCH send error', err, payload)
