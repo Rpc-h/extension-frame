@@ -3,22 +3,24 @@ import { isError } from '@rpch/sdk/build/jrpc'
 import EventEmitter from 'events'
 import { Connection } from 'ethereum-provider/dist/types'
 import { v4 as uuid } from 'uuid'
-import EthereumProvider from 'ethereum-provider'
 import provider from 'eth-provider'
 import store from '../../store'
 import log from 'electron-log'
-import debug from 'debug'
+
+// @ts-ignore
+import ProviderCreator from 'eth-provider/provider'
 
 const dev = process.env.NODE_ENV === 'development'
-
-debug.enable('rpch:*')
 
 class RPChSDKSingleton {
   static sdk: RPChSDK | undefined
 
   static options: Ops = {
     discoveryPlatformEndpoint: process.env.DISCOVERY_PLATFORM_API_ENDPOINT || undefined,
-    forceZeroHop: true
+    // forceZeroHop: true,
+
+    // TODO: Remove after confirmation and testing
+    debugScope: 'rpch:*'
   }
 
   static send(...args: Parameters<RPChSDK['send']>): ReturnType<RPChSDK['send']> {
@@ -202,12 +204,19 @@ class RPChConnection extends EventEmitter implements Connection {
   }
 }
 
-export const createRpchProvider: typeof provider = (target, options) => {
+export const createRpchProvider: typeof provider = (target, options = {}) => {
   const isRpchEnabled = store('main.rpchEnabled')
   log.info(`RPCh ${isRpchEnabled ? 'enabled' : 'disabled'}`)
 
   if (typeof target === 'string' && /^http(s)?:\/\//i.test(target) && isRpchEnabled) {
-    return new EthereumProvider(new RPChConnection(target))
+    return ProviderCreator(
+      {
+        http: (rpcUrl: string) => new RPChConnection(rpcUrl),
+        injected: { __isProvide: false }
+      },
+      [{ type: 'custom', location: target, protocol: 'http' }],
+      options
+    )
   }
   return provider(target, options)
 }
