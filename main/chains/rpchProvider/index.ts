@@ -9,6 +9,7 @@ import log from 'electron-log'
 
 // @ts-ignore
 import ProviderCreator from 'eth-provider/provider'
+import { DISCOVERY_PLATFORM_API_ENDPOINT, RPCH_SECRET_TOKEN } from '../../config'
 
 const dev = process.env.NODE_ENV === 'development'
 
@@ -16,25 +17,25 @@ class RPChSDKSingleton {
   static sdk: RPChSDK | undefined
 
   static options: Ops = {
-    discoveryPlatformEndpoint: process.env.DISCOVERY_PLATFORM_API_ENDPOINT || undefined,
-    forceZeroHop: true,
+    discoveryPlatformEndpoint: DISCOVERY_PLATFORM_API_ENDPOINT || undefined,
+    forceZeroHop: true
 
     // TODO: Remove after confirmation and testing
-    debugScope: 'rpch:*'
+    // debugScope: 'rpch:*'
   }
 
   static send(...args: Parameters<RPChSDK['send']>): ReturnType<RPChSDK['send']> {
     if (!this.sdk) {
       // TODO: Remove after confirmation and testing
-      log.info('RPCh: Client ID ', process.env.RPCH_SECRET_TOKEN)
+      log.info('RPCh: Client ID ', RPCH_SECRET_TOKEN)
 
-      if (!process.env.RPCH_SECRET_TOKEN) {
+      if (!RPCH_SECRET_TOKEN) {
         log.error('MISSING RPCH SECRET TOKEN')
         throw new Error('MISSING RPCH SECRET TOKEN')
       }
 
       log.info('RPCh: first SEND request, creating SDK instance')
-      this.sdk = new RPChSDK(process.env.RPCH_SECRET_TOKEN, this.options)
+      this.sdk = new RPChSDK(RPCH_SECRET_TOKEN, this.options)
     }
     return this.sdk.send(...args)
   }
