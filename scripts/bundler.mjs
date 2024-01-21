@@ -2,8 +2,12 @@ import { Parcel } from '@parcel/core'
 import EventEmitter from 'events'
 import url from 'node:url'
 
+import { config } from 'dotenv'
+
 const port = 1234
 const host = `http://localhost:${port}`
+
+config()
 
 const bundler = new Parcel({
   defaultConfig: '@parcel/config-default',
@@ -15,7 +19,9 @@ const bundler = new Parcel({
     'app/notify/index.dev.html'
   ],
   env: {
-    NODE_ENV: 'development'
+    NODE_ENV: 'development',
+    RPCH_SECRET_TOKEN: process.env.RPCH_SECRET_TOKEN,
+    DISCOVERY_PLATFORM_API_ENDPOINT: process.env.DISCOVERY_PLATFORM_API_ENDPOINT,
   },
   serveOptions: {
     port

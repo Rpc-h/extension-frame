@@ -702,7 +702,8 @@ const mainState: M = {
     },
     storage: {},
     removed: []
-  }
+  },
+  rpchEnabled: true
 }
 
 const initial = {

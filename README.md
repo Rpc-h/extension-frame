@@ -59,6 +59,12 @@ If you use an arch-based distro, you can use an AUR Helper like [yay](https://gi
 
 **On Ubuntu:** Run `sudo apt-get install build-essential libudev-dev`.
 
+Set environment variables in `.env` following the example from `.env.example` file.
+
+`RPCH_SECRET_TOKEN` - secret token retrieved from [hopr degen](https://degen.rpch.net/)
+
+`DISCOVERY_PLATFORM_API_ENDPOINT` - (OPTIONAL) - set to overwrite the default setting for RPCh discovery platform API endpoint
+
 ```bash
 # Clone
 › git clone https://github.com/floating/frame
