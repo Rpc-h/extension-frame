@@ -6,5 +6,4 @@
 
 export const RPCH_SECRET_TOKEN = process.env.RPCH_SECRET_TOKEN || 'SECRET KEY' // TEST VALUE
 
-export const DISCOVERY_PLATFORM_API_ENDPOINT =
-  process.env.DISCOVERY_PLATFORM_API_ENDPOINT || 'https://discovery.rpch.tech'
+export const DISCOVERY_PLATFORM_API_ENDPOINT = process.env.DISCOVERY_PLATFORM_API_ENDPOINT
