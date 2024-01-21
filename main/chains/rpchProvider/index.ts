@@ -25,7 +25,7 @@ class RPChSDKSingleton {
   }
 
   static send(...args: Parameters<RPChSDK['send']>): ReturnType<RPChSDK['send']> {
-    if (!this.sdk) {
+    if (!RPChSDKSingleton.sdk) {
       // TODO: Remove after confirmation and testing
       log.info('RPCh: Client ID ', RPCH_SECRET_TOKEN)
 
@@ -35,9 +35,9 @@ class RPChSDKSingleton {
       }
 
       log.info('RPCh: first SEND request, creating SDK instance')
-      this.sdk = new RPChSDK(RPCH_SECRET_TOKEN, this.options)
+      RPChSDKSingleton.sdk = new RPChSDK(RPCH_SECRET_TOKEN, this.options)
     }
-    return this.sdk.send(...args)
+    return RPChSDKSingleton.sdk.send(...args)
   }
 }
 
